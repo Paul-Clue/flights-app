@@ -125,7 +125,7 @@ export default function PassengerSelect({ onChange, value }: PassengerSelectProp
       value={getTotalPassengers()}
       size='small'
       sx={{
-        color: 'white',
+        color: '#AFB1B6',
         '& .MuiOutlinedInput-notchedOutline': {
           border: 'none',
         },
@@ -139,10 +139,12 @@ export default function PassengerSelect({ onChange, value }: PassengerSelectProp
       MenuProps={{
         PaperProps: {
           sx: {
-            width: '300px',
+            width: { xs: '280px', sm: '300px' },
             mt: 1,
+            maxHeight: { xs: '80vh', sm: 'auto' }
           },
         },
+        transformOrigin: { vertical: 'top', horizontal: 'left' },
       }}
     >
       <StyledMenuItem disableRipple>

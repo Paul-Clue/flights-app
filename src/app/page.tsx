@@ -10,9 +10,9 @@ export default function Home() {
       sx={{
         width: '100%',
         minWidth: '100%',
-        height: '100vh',
+        minHeight: '100vh',
         bgcolor: '#202123',
-        p: 8,
+        p: { xs: 2, sm: 4, md: 8 },
       }}
     >
       <Box
@@ -24,20 +24,19 @@ export default function Home() {
           backgroundImage: 'url(/hero-img.png)',
           backgroundSize: 'contain',
           backgroundPosition: 'center',
-          position: 'absolute',
-          height: '19vw',
-          minHeight: '136px',
-          width: '70vw',
-          left: '50%',
-          transform: 'translate3d(-50%, 0, 0)',
+          backgroundRepeat: 'no-repeat',
+          position: 'relative',
+          height: { xs: '100px', sm: '136px', md: '19vw' },
+          width: { xs: '90vw', sm: '80vw', md: '70vw' },
+          mx: 'auto',
+          mb: { xs: 4, sm: 6, md: 8 },
         }}
       >
         <Typography
           variant='h1'
           sx={{
-            fontSize: '3.5rem',
+            fontSize: { xs: '2rem', sm: '2.5rem', md: '3.5rem' },
             fontWeight: 'normal',
-            mb: 4,
             position: 'absolute',
             bottom: 0,
           }}
@@ -46,7 +45,11 @@ export default function Home() {
         </Typography>
       </Box>
 
-      <Box sx={{ maxWidth: 800, mx: 'auto', mt: 32 }}>
+      <Box sx={{ 
+        maxWidth: 800, 
+        mx: 'auto',
+        px: { xs: 2, sm: 3, md: 4 }
+      }}>
         <FlightSearch />
       </Box>
     </Box>

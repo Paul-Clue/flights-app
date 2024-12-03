@@ -118,12 +118,22 @@ export default function ResultsPage() {
   const processedFlights = sortFlights(filterFlights(flights));
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" sx={{ mb: 4, color: 'white' }}>
+    <Container maxWidth="lg" sx={{ 
+      py: { xs: 2, sm: 3, md: 4 },
+      px: { xs: 2, sm: 3, md: 4 }
+    }}>
+      <Typography 
+        variant="h4" 
+        sx={{ 
+          mb: { xs: 2, sm: 3, md: 4 }, 
+          color: 'white',
+          fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' }
+        }}
+      >
         Flight Results
       </Typography>
 
-      <Grid container spacing={2} sx={{ mb: 4 }}>
+      <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: { xs: 2, sm: 3, md: 4 } }}>
         <Grid item xs={12} sm={6}>
           <FormControl fullWidth sx={{ bgcolor: '#3A3B3F' }}>
             <InputLabel sx={{ color: 'white' }}>Sort By</InputLabel>

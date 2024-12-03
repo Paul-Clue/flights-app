@@ -43,19 +43,21 @@ export default function AirportAutocomplete({ type, value, onChange }: Props) {
       setLoading(true);
       try {
         const response = await fetch(
-          `https://sky-scrapper.p.rapidapi.com/api/v1/flights/searchAirport?query=${encodeURIComponent(inputValue)}`,
+          `https://sky-scrapper.p.rapidapi.com/api/v1/flights/searchAirport?query=${encodeURIComponent(
+            inputValue
+          )}`,
           {
             headers: {
               'X-RapidAPI-Key': process.env.NEXT_PUBLIC_RAPIDAPI_KEY || '',
-              'X-RapidAPI-Host': 'sky-scrapper.p.rapidapi.com'
-            }
+              'X-RapidAPI-Host': 'sky-scrapper.p.rapidapi.com',
+            },
           }
         );
-        
+
         if (!response.ok) {
           throw new Error('Failed to fetch airports');
         }
-        
+
         const data = await response.json();
         console.log('API Response:', data);
 
@@ -65,7 +67,7 @@ export default function AirportAutocomplete({ type, value, onChange }: Props) {
             name: airport.presentation.title,
             cityName: airport.presentation.subtitle,
             skyId: airport.skyId,
-            entityId: airport.entityId
+            entityId: airport.entityId,
           }));
           console.log('Mapped Airports:', airports);
           setOptions(airports);
@@ -89,7 +91,13 @@ export default function AirportAutocomplete({ type, value, onChange }: Props) {
 
   useEffect(() => {
     if (value) {
-      setSelectedAirport({ iataCode: value, name: value, cityName: value, skyId: value, entityId: value });
+      setSelectedAirport({
+        iataCode: value,
+        name: value,
+        cityName: value,
+        skyId: value,
+        entityId: value,
+      });
     } else {
       setSelectedAirport(null);
     }
@@ -100,25 +108,33 @@ export default function AirportAutocomplete({ type, value, onChange }: Props) {
       value={selectedAirport}
       onChange={(_, newValue) => {
         setSelectedAirport(newValue);
-        onChange(newValue ? JSON.stringify({
-          skyId: newValue.skyId,
-          entityId: newValue.entityId
-        }) : '');
+        onChange(
+          newValue
+            ? JSON.stringify({
+                skyId: newValue.skyId,
+                entityId: newValue.entityId,
+              })
+            : ''
+        );
       }}
       inputValue={inputValue}
       onInputChange={(_, newInputValue) => {
         setInputValue(newInputValue);
       }}
       options={options}
-      getOptionLabel={(option) => 
+      getOptionLabel={(option) =>
         `${option.cityName} (${option.iataCode}) - ${option.name}`
       }
-      isOptionEqualToValue={(option, value) => 
+      isOptionEqualToValue={(option, value) =>
         option.iataCode === value.iataCode
       }
       loading={loading}
-      loadingText="Searching airports..."
-      noOptionsText={inputValue.length < 2 ? "Type to search airports..." : "No airports found"}
+      loadingText='Searching airports...'
+      noOptionsText={
+        inputValue.length < 2
+          ? 'Type to search airports...'
+          : 'No airports found'
+      }
       filterOptions={(x) => x}
       renderInput={(params) => (
         <TextField
@@ -128,11 +144,11 @@ export default function AirportAutocomplete({ type, value, onChange }: Props) {
           InputProps={{
             ...params.InputProps,
             startAdornment: (
-              <InputAdornment position="start">
+              <InputAdornment position='start'>
                 {type === 'origin' ? (
-                  <FlightTakeoff sx={{ color: 'white' }} />
+                  <FlightTakeoff sx={{ color: '#AFB1B6' }} />
                 ) : (
-                  <FlightLand sx={{ color: 'white' }} />
+                  <FlightLand sx={{ color: '#AFB1B6' }} />
                 )}
               </InputAdornment>
             ),
@@ -141,9 +157,11 @@ export default function AirportAutocomplete({ type, value, onChange }: Props) {
             '& .MuiOutlinedInput-root': {
               color: 'white',
               '& fieldset': {
-                borderColor: '#3A3B3F',
+                borderColor: '#AFB1B6',
               },
             },
+            width: { xs: '100%', sm: '100px', md: '180px', lg: '200px' },
+            flexGrow: 1,
           }}
         />
       )}

@@ -105,7 +105,7 @@ export default function FlightSearch() {
       alert('Please select an origin airport');
       return;
     }
-    
+
     if (!locations.destination) {
       alert('Please select a destination airport');
       return;
@@ -115,7 +115,7 @@ export default function FlightSearch() {
       alert('Origin and destination cannot be the same');
       return;
     }
-    
+
     if (!dates.departure) {
       alert('Please select a departure date');
       return;
@@ -152,7 +152,11 @@ export default function FlightSearch() {
       }
 
       // Check for flights array directly
-      if (!data.flights || !Array.isArray(data.flights) || data.flights.length === 0) {
+      if (
+        !data.flights ||
+        !Array.isArray(data.flights) ||
+        data.flights.length === 0
+      ) {
         throw new Error('No flights found for this route');
       }
 
@@ -164,20 +168,24 @@ export default function FlightSearch() {
         },
         body: JSON.stringify({
           searchId: data.searchId,
-          flights: data.flights  // Store the mapped flights directly
+          flights: data.flights, // Store the mapped flights directly
         }),
       });
 
       // Store in sessionStorage as backup
       sessionStorage.setItem(
-        `flights-${data.searchId}`, 
+        `flights-${data.searchId}`,
         JSON.stringify(data.flights)
       );
-      
+
       router.push(`/flights/results?id=${data.searchId}`);
     } catch (error) {
       console.error('Error details:', error);
-      alert(error instanceof Error ? error.message : 'Failed to search flights. Please try again.');
+      alert(
+        error instanceof Error
+          ? error.message
+          : 'Failed to search flights. Please try again.'
+      );
     }
   };
 
@@ -187,12 +195,20 @@ export default function FlightSearch() {
         elevation={0}
         sx={{
           bgcolor: '#3A3B3F',
-          p: 2,
+          p: { xs: 1.5, sm: 2 },
           borderRadius: 2,
           width: '100%',
         }}
       >
-        <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 2,
+            mb: 2,
+            alignItems: 'center',
+          }}
+        >
           {/* section: flight type */}
           <Select
             value={flightType}
@@ -200,7 +216,7 @@ export default function FlightSearch() {
             size='small'
             // IconComponent={Person}
             sx={{
-              color: 'white',
+              color: '#AFB1B6',
               '& .MuiOutlinedInput-notchedOutline': {
                 border: 'none',
               },
@@ -230,7 +246,7 @@ export default function FlightSearch() {
             onChange={handleChangeCabinClass}
             size='small'
             sx={{
-              color: 'white',
+              color: '#AFB1B6',
               '& .MuiOutlinedInput-notchedOutline': {
                 border: 'none',
               },
@@ -244,30 +260,22 @@ export default function FlightSearch() {
         </Box>
 
         {/* section: from and to */}
-        <Box sx={{ display: 'flex', width: '100%' }}>
-          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-            {/* <TextField
-              placeholder='Where from?'
-              fullWidth
-              value={locations.origin}
-              onChange={handleLocationChange('origin')}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <FlightTakeoff sx={{ color: 'white' }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  color: 'white',
-                  '& fieldset': {
-                    borderColor: '#3A3B3F',
-                  },
-                },
-              }}
-            /> */}
-
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            width: '100%',
+            gap: 2,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 2,
+              width: '100%',
+            }}
+          >
             <AirportAutocomplete
               type='origin'
               value={locations.origin}
@@ -280,32 +288,13 @@ export default function FlightSearch() {
               sx={{
                 bgcolor: '#3A3B3F',
                 '&:hover': { bgcolor: '#4A4B4F' },
+                padding: 0,
+                margin: -2,
               }}
             >
               <CompareArrows sx={{ color: 'white' }} />
             </IconButton>
 
-            {/* <TextField
-              placeholder='Where to?'
-              fullWidth
-              value={locations.destination}
-              onChange={handleLocationChange('destination')}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <FlightLand sx={{ color: 'white' }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  color: 'white',
-                  '& fieldset': {
-                    borderColor: '#3A3B3F',
-                  },
-                },
-              }}
-            /> */}
             <AirportAutocomplete
               type='destination'
               value={locations.destination}
@@ -316,7 +305,16 @@ export default function FlightSearch() {
           </Box>
 
           {/* section: departure and return */}
-          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              border: '1px solid #AFB1B6',
+              paddingRight: 0,
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 2,
+              width: '100%',
+            }}
+          >
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <div ref={containerRef} id='flight-date-container'>
                 <Stack
@@ -325,6 +323,7 @@ export default function FlightSearch() {
                     border: '1px solid #3A3B3F',
                     borderRadius: 1,
                     overflow: 'hidden',
+                    paddingTop: 0.5,
                   }}
                 >
                   <DatePicker
@@ -346,12 +345,12 @@ export default function FlightSearch() {
                           startIcon={<CalendarTodayIcon />}
                           sx={{
                             flex: 1,
-                            color: 'white',
+                            color: '#AFB1B6',
                             textTransform: 'none',
                             justifyContent: 'flex-start',
-                            borderRight: '1px solid #3A3B3F',
+                            // borderRight: '1px solid white',
                             borderRadius: 0,
-                            padding: '10px 16px',
+                            padding: '10px 20px',
                             '&:hover': {
                               backgroundColor: 'rgba(255, 255, 255, 0.05)',
                             },
@@ -387,9 +386,10 @@ export default function FlightSearch() {
                           startIcon={<CalendarTodayIcon />}
                           sx={{
                             flex: 1,
-                            color: 'white',
+                            color: '#AFB1B6',
                             textTransform: 'none',
                             justifyContent: 'flex-start',
+                            borderLeft: '1px solid #AFB1B6',
                             borderRadius: 0,
                             padding: '10px 16px',
                             '&:hover': {
@@ -410,13 +410,19 @@ export default function FlightSearch() {
           </Box>
         </Box>
       </Paper>
-      <Box>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+        }}
+      >
         <Button
           variant='contained'
-          fullWidth
           onClick={handleSearch}
           sx={{
             bgcolor: '#8AB4F8',
+            width: '20%',
+            borderRadius: 10,
             textTransform: 'none',
             '&:hover': {
               bgcolor: '#3A74FF',
