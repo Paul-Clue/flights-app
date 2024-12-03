@@ -62,13 +62,16 @@ export default function AirportAutocomplete({ type, value, onChange }: Props) {
         console.log('Airport Search Response:', JSON.stringify(data, null, 2));
 
         if (active && data.data && Array.isArray(data.data)) {
-          const airports: Airport[] = data.data.map((airport: ApiAirport) => ({
-            iataCode: airport.skyId,
-            name: airport.presentation.title,
-            cityName: airport.presentation.subtitle,
-            skyId: airport.skyId,
-            entityId: airport.entityId,
-          }));
+          const airports: Airport[] = data.data
+            .map((airport: ApiAirport) => ({
+              iataCode: airport.skyId,
+              name: airport.presentation.title,
+              cityName: airport.presentation.subtitle,
+              skyId: airport.skyId,
+              entityId: airport.entityId,
+            }))
+            .filter(isCommercialAirport);
+
           console.log('Mapped Airports:', airports);
           setOptions(airports);
         } else {
@@ -169,3 +172,9 @@ export default function AirportAutocomplete({ type, value, onChange }: Props) {
     />
   );
 }
+
+const isCommercialAirport = (airport: Airport) => {
+  // List of known executive/private airports
+  const nonCommercialAirports = ['OPF'];
+  return !nonCommercialAirports.includes(airport.skyId);
+};

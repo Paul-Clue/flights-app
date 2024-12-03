@@ -348,7 +348,6 @@ export default function FlightSearch() {
                             color: '#AFB1B6',
                             textTransform: 'none',
                             justifyContent: 'flex-start',
-                            // borderRight: '1px solid white',
                             borderRadius: 0,
                             padding: '10px 20px',
                             '&:hover': {
@@ -372,9 +371,7 @@ export default function FlightSearch() {
                     onChange={handleDateChange('return')}
                     slotProps={{
                       popper: {
-                        anchorEl: document.getElementById(
-                          'flight-date-container'
-                        ),
+                        anchorEl: containerRef.current,
                         placement: 'bottom-start',
                       },
                     }}

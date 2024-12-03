@@ -2,8 +2,9 @@
 
 import FlightSearch from '@/components/FlightSearch';
 import { Box, Typography } from '@mui/material';
+import { Suspense } from 'react';
 
-export default function Home() {
+function MainContent() {
   return (
     <Box
       component='main'
@@ -53,5 +54,13 @@ export default function Home() {
         <FlightSearch />
       </Box>
     </Box>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <MainContent />
+    </Suspense>
   );
 }
