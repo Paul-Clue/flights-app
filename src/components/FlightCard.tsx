@@ -29,11 +29,23 @@ interface FlightCardProps {
 }
 
 export default function FlightCard({ price, legs }: FlightCardProps) {
+  if (!price || !legs || legs.length === 0) {
+    return (
+      <Card sx={{ p: 2, mb: 2, bgcolor: '#3A3B3F', color: 'white' }}>
+        <Typography>Flight details unavailable</Typography>
+      </Card>
+    );
+  }
+
   const formatTime = (time: string) => {
-    return new Date(time).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    try {
+      return new Date(time).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      return 'Time unavailable';
+    }
   };
 
   const formatDuration = (minutes: number) => {

@@ -49,13 +49,34 @@ export default function ResultsPage() {
 
   useEffect(() => {
     const fetchResults = async () => {
+      const searchId = searchParams.get('id');
+      if (!searchId) return;
+
       try {
-        const response = await fetch(`/api/flights/results?id=${searchParams.get('id')}`);
+        // Try to get cached results first
+        const cachedResults = sessionStorage.getItem(`flights-${searchId}`);
+        if (cachedResults) {
+          const parsedResults = JSON.parse(cachedResults);
+          if (Array.isArray(parsedResults) && parsedResults.length > 0) {
+            setFlights(parsedResults);
+            setLoading(false);
+            return;
+          }
+        }
+
+        const response = await fetch(`/api/flights/results?id=${searchId}`);
         if (!response.ok) throw new Error('Failed to fetch results');
         const data = await response.json();
-        setFlights(data.flights);
+        
+        if (data.flights && Array.isArray(data.flights) && data.flights.length > 0) {
+          sessionStorage.setItem(`flights-${searchId}`, JSON.stringify(data.flights));
+          setFlights(data.flights);
+        } else {
+          setFlights([]);
+        }
       } catch (error) {
         console.error('Error fetching results:', error);
+        setFlights([]);
       } finally {
         setLoading(false);
       }

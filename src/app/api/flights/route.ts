@@ -6,9 +6,39 @@ interface LocationIds {
   entityId: string;
 }
 
+interface ApiFlightResponse {
+  id: string;
+  price: {
+    raw: number;
+    formatted: string;
+  };
+  legs: Array<{
+    id: string;
+    departure: string;
+    arrival: string;
+    duration: number;
+    carriers: {
+      marketing: Array<{
+        name: string;
+        alternateId: string;
+      }>;
+    };
+    segments: Array<{
+      flightNumber: string;
+      origin: {
+        displayCode: string;
+      };
+      destination: {
+        displayCode: string;
+      };
+    }>;
+  }>;
+}
+
 export async function POST(request: Request) {
   try {
     const searchData: FlightSearchData = await request.json();
+    console.log('Search Data:', searchData);
 
     if (!searchData.locations.origin || !searchData.locations.destination || !searchData.dates.departure) {
       return NextResponse.json(
@@ -67,19 +97,45 @@ export async function POST(request: Request) {
       }
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'API request failed');
+    const flightData = await response.json();
+    console.log('Flight API Response:', flightData);
+
+    if (!response.ok || !flightData.data?.itineraries) {
+      return NextResponse.json({
+        searchId: Date.now().toString(),
+        flights: [],
+        message: 'No flights found'
+      });
     }
 
-    const flightData = await response.json();
-    console.log('Flight Data:', flightData);
-    
     const searchId = Date.now().toString();
+    const mappedFlights = flightData.data.itineraries.map((flight: ApiFlightResponse) => ({
+      id: flight.id,
+      price: {
+        amount: flight.price.raw,
+        currency: 'USD'
+      },
+      legs: flight.legs.map(leg => ({
+        departure: {
+          time: leg.departure,
+          airport: leg.segments[0].origin.displayCode
+        },
+        arrival: {
+          time: leg.arrival,
+          airport: leg.segments[0].destination.displayCode
+        },
+        duration: leg.duration,
+        carrier: {
+          name: leg.carriers.marketing[0].name,
+          code: leg.carriers.marketing[0].alternateId
+        },
+        flightNumber: leg.segments[0].flightNumber
+      }))
+    }));
 
     return NextResponse.json({
       searchId,
-      flights: flightData,
+      flights: mappedFlights,
       message: 'Search completed successfully'
     });
 

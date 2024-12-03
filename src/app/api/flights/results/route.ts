@@ -24,6 +24,15 @@ interface FlightItinerary {
   }>;
 }
 
+const flightCache: Record<string, FlightItinerary[]> = {};
+
+export async function POST(request: Request) {
+  const data = await request.json();
+  const { searchId, flights } = data;
+  flightCache[searchId] = flights;
+  return NextResponse.json({ success: true });
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -36,31 +45,17 @@ export async function GET(request: Request) {
       );
     }
 
-    const flightData = await fetch('/api/flights/cache/' + searchId);
-    const results = await flightData.json();
+    const cachedFlights = flightCache[searchId];
+    if (!cachedFlights) {
+      return NextResponse.json(
+        { error: 'No flights found for this search' },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json({
-      flights: results.data.itineraries.map((itinerary: Partial<FlightItinerary>) => ({
-        id: itinerary.id,
-        price: itinerary.price,
-        legs: itinerary.legs?.map((leg: Partial<FlightItinerary['legs'][0]>) => ({
-          departure: {
-            time: leg.departure?.time,
-            airport: leg.departure?.airport
-          },
-          arrival: {
-            time: leg.arrival?.time,
-            airport: leg.arrival?.airport
-          },
-          duration: leg.duration,
-          carrier: {
-            name: leg.carrier?.name,
-            code: leg.carrier?.code
-          },
-          flightNumber: leg.flightNumber
-        }))
-      })),
-      totalResults: results.data.context.totalResults
+      flights: cachedFlights,
+      totalResults: cachedFlights.length
     });
 
   } catch (error) {

@@ -145,15 +145,39 @@ export default function FlightSearch() {
       });
 
       const data = await response.json();
+      console.log('API Response:', JSON.stringify(data, null, 2));
 
       if (!response.ok) {
         throw new Error(data.error || 'Search failed');
       }
 
+      // Check for flights array directly
+      if (!data.flights || !Array.isArray(data.flights) || data.flights.length === 0) {
+        throw new Error('No flights found for this route');
+      }
+
+      // Store the flight data in the API route cache
+      await fetch('/api/flights/results', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          searchId: data.searchId,
+          flights: data.flights  // Store the mapped flights directly
+        }),
+      });
+
+      // Store in sessionStorage as backup
+      sessionStorage.setItem(
+        `flights-${data.searchId}`, 
+        JSON.stringify(data.flights)
+      );
+      
       router.push(`/flights/results?id=${data.searchId}`);
     } catch (error) {
-      console.error('Error searching flights:', error);
-      alert('Failed to search flights. Please try again.');
+      console.error('Error details:', error);
+      alert(error instanceof Error ? error.message : 'Failed to search flights. Please try again.');
     }
   };
 
