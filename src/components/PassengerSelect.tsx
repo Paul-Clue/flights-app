@@ -1,7 +1,6 @@
 import {
   Select,
   MenuItem,
-  // SelectChangeEvent,
   Typography,
   IconButton,
   Button,
@@ -13,7 +12,6 @@ import { Person } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 
-// Styled components for custom menu items
 const StyledMenuItem = styled(MenuItem)({
   display: 'flex',
   flexDirection: 'column',
@@ -89,14 +87,22 @@ function PassengerCounter({ value, onIncrement, onDecrement, min = 0, max = 9 }:
   );
 }
 
-export default function PassengerSelect() {
-  const [passengers, setPassengers] = useState<PassengerCount>({
-    adults: 1,
-    children: 0,
-    infantsInSeat: 0,
-    infantsOnLap: 0,
-  });
+interface PassengerSelectProps {
+  onChange: (passengers: PassengerCount) => void;
+  value: PassengerCount;
+}
+
+export default function PassengerSelect({ onChange, value }: PassengerSelectProps) {
   const [open, setOpen] = useState(false);
+  
+  const passengers = value;
+  const setPassengers = (newValue: PassengerCount | ((prev: PassengerCount) => PassengerCount)) => {
+    if (typeof newValue === 'function') {
+      onChange(newValue(passengers));
+    } else {
+      onChange(newValue);
+    }
+  };
 
   const getTotalPassengers = () => {
     return passengers.adults + passengers.children + 
@@ -150,11 +156,11 @@ export default function PassengerSelect() {
             </Box>
             <PassengerCounter
               value={passengers.adults}
-              onIncrement={() => setPassengers(prev => ({
+              onIncrement={() => setPassengers((prev: PassengerCount) => ({
                 ...prev,
                 adults: Math.min(prev.adults + 1, 9)
               }))}
-              onDecrement={() => setPassengers(prev => ({
+              onDecrement={() => setPassengers((prev: PassengerCount) => ({
                 ...prev,
                 adults: Math.max(prev.adults - 1, 1)
               }))}
@@ -171,11 +177,11 @@ export default function PassengerSelect() {
             </Box>
             <PassengerCounter
               value={passengers.children}
-              onIncrement={() => setPassengers(prev => ({
+              onIncrement={() => setPassengers((prev: PassengerCount) => ({
                 ...prev,
                 children: Math.min(prev.children + 1, 9)
               }))}
-              onDecrement={() => setPassengers(prev => ({
+              onDecrement={() => setPassengers((prev: PassengerCount) => ({
                 ...prev,
                 children: Math.max(prev.children - 1, 0)
               }))}
@@ -191,11 +197,11 @@ export default function PassengerSelect() {
             </Box>
             <PassengerCounter
               value={passengers.infantsInSeat}
-              onIncrement={() => setPassengers(prev => ({
+              onIncrement={() => setPassengers((prev: PassengerCount) => ({
                 ...prev,
                 infantsInSeat: Math.min(prev.infantsInSeat + 1, 9)
               }))}
-              onDecrement={() => setPassengers(prev => ({
+              onDecrement={() => setPassengers((prev: PassengerCount) => ({
                 ...prev,
                 infantsInSeat: Math.max(prev.infantsInSeat - 1, 0)
               }))}
@@ -211,11 +217,11 @@ export default function PassengerSelect() {
             </Box>
             <PassengerCounter
               value={passengers.infantsOnLap}
-              onIncrement={() => setPassengers(prev => ({
+              onIncrement={() => setPassengers((prev: PassengerCount) => ({
                 ...prev,
                 infantsOnLap: Math.min(prev.infantsOnLap + 1, 9)
               }))}
-              onDecrement={() => setPassengers(prev => ({
+              onDecrement={() => setPassengers((prev: PassengerCount) => ({
                 ...prev,
                 infantsOnLap: Math.max(prev.infantsOnLap - 1, 0)
               }))}

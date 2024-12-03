@@ -4,12 +4,12 @@ import {
   Box,
   Button,
   IconButton,
-  TextField,
+  // TextField,
   SelectChangeEvent,
   Select,
   MenuItem,
   // Menu,
-  InputAdornment,
+  // InputAdornment,
   Paper,
   Typography,
   Stack,
@@ -17,8 +17,8 @@ import {
 import {
   CompareArrows,
   // Person,
-  FlightTakeoff,
-  FlightLand,
+  // FlightTakeoff,
+  // FlightLand,
   // CalendarMonth,
   Search,
 } from '@mui/icons-material';
@@ -28,7 +28,10 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PassengerSelect from './PassengerSelect';
-import { ChangeEvent, useState } from 'react';
+import AirportAutocomplete from './AirportAutocomplete';
+// import { ChangeEvent, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useRef, useState } from 'react';
 
 type FlightType = 'Round-trip' | 'One-way' | 'Multi-city';
 type CabinClass = 'Economy' | 'Premium economy' | 'Business' | 'First';
@@ -42,8 +45,16 @@ interface DateRange {
   return: Date | null;
 }
 
+interface PassengerCount {
+  adults: number;
+  children: number;
+  infantsInSeat: number;
+  infantsOnLap: number;
+}
+
 export default function FlightSearch() {
   // section: state
+  const containerRef = useRef<HTMLDivElement>(null);
   const [flightType, setFlightType] = useState<FlightType>('Round-trip');
   const [cabinClass, setCabinClass] = useState<CabinClass>('Economy');
   const [locations, setLocations] = useState<FlightLocation>({
@@ -55,6 +66,13 @@ export default function FlightSearch() {
     departure: null,
     return: null,
   });
+  const [passengers, setPassengers] = useState<PassengerCount>({
+    adults: 1,
+    children: 0,
+    infantsInSeat: 0,
+    infantsOnLap: 0,
+  });
+  const router = useRouter();
 
   const handleChangeFlightType = (event: SelectChangeEvent) => {
     setFlightType(event.target.value as FlightType);
@@ -64,13 +82,13 @@ export default function FlightSearch() {
     setCabinClass(event.target.value as CabinClass);
   };
 
-  const handleLocationChange =
-    (field: keyof FlightLocation) => (event: ChangeEvent<HTMLInputElement>) => {
-      setLocations((prev) => ({
-        ...prev,
-        [field]: event.target.value,
-      }));
-    };
+  // const handleLocationChange =
+  //   (field: keyof FlightLocation) => (event: ChangeEvent<HTMLInputElement>) => {
+  //     setLocations((prev) => ({
+  //       ...prev,
+  //       [field]: event.target.value,
+  //     }));
+  //   };
 
   const handleDateChange =
     (type: 'departure' | 'return') => (date: Date | null) => {
@@ -80,6 +98,65 @@ export default function FlightSearch() {
       }));
       setOpen(null);
     };
+
+  const handleSearch = async () => {
+    // Add more specific validation
+    if (!locations.origin) {
+      alert('Please select an origin airport');
+      return;
+    }
+    
+    if (!locations.destination) {
+      alert('Please select a destination airport');
+      return;
+    }
+
+    if (locations.origin === locations.destination) {
+      alert('Origin and destination cannot be the same');
+      return;
+    }
+    
+    if (!dates.departure) {
+      alert('Please select a departure date');
+      return;
+    }
+
+    // Add validation for return date if round-trip
+    if (flightType === 'Round-trip' && !dates.return) {
+      alert('Please select a return date for round-trip flight');
+      return;
+    }
+
+    const searchData = {
+      flightType,
+      cabinClass,
+      passengers,
+      locations,
+      dates,
+    };
+
+    try {
+      const response = await fetch('/api/flights', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(searchData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Search failed');
+      }
+
+      router.push(`/flights/results?id=${data.searchId}`);
+    } catch (error) {
+      console.error('Error searching flights:', error);
+      alert('Failed to search flights. Please try again.');
+    }
+  };
+
   return (
     <>
       <Paper
@@ -120,7 +197,7 @@ export default function FlightSearch() {
 
           {/* section: passengers */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <PassengerSelect />
+            <PassengerSelect value={passengers} onChange={setPassengers} />
           </Box>
 
           {/* section: class */}
@@ -145,7 +222,7 @@ export default function FlightSearch() {
         {/* section: from and to */}
         <Box sx={{ display: 'flex', width: '100%' }}>
           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-            <TextField
+            {/* <TextField
               placeholder='Where from?'
               fullWidth
               value={locations.origin}
@@ -165,6 +242,14 @@ export default function FlightSearch() {
                   },
                 },
               }}
+            /> */}
+
+            <AirportAutocomplete
+              type='origin'
+              value={locations.origin}
+              onChange={(value) =>
+                setLocations((prev) => ({ ...prev, origin: value }))
+              }
             />
 
             <IconButton
@@ -176,7 +261,7 @@ export default function FlightSearch() {
               <CompareArrows sx={{ color: 'white' }} />
             </IconButton>
 
-            <TextField
+            {/* <TextField
               placeholder='Where to?'
               fullWidth
               value={locations.destination}
@@ -196,52 +281,20 @@ export default function FlightSearch() {
                   },
                 },
               }}
+            /> */}
+            <AirportAutocomplete
+              type='destination'
+              value={locations.destination}
+              onChange={(value) =>
+                setLocations((prev) => ({ ...prev, destination: value }))
+              }
             />
           </Box>
 
           {/* section: departure and return */}
           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-            {/* <TextField
-              placeholder='Departure'
-              fullWidth
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <CalendarMonth sx={{ color: 'white' }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  color: 'white',
-                  '& fieldset': {
-                    borderColor: '#3A3B3F',
-                  },
-                },
-              }}
-            />
-
-            <TextField
-              placeholder='Return'
-              fullWidth
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <CalendarMonth sx={{ color: 'white' }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  color: 'white',
-                  '& fieldset': {
-                    borderColor: '#3A3B3F',
-                  },
-                },
-              }}
-            /> */}
             <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <Box id='flight-date-container'>
+              <div ref={containerRef} id='flight-date-container'>
                 <Stack
                   direction='row'
                   sx={{
@@ -258,16 +311,11 @@ export default function FlightSearch() {
                     onChange={handleDateChange('departure')}
                     slotProps={{
                       popper: {
-                        anchorEl: document.getElementById(
-                          'flight-date-container'
-                        ),
+                        anchorEl: containerRef.current,
                         placement: 'bottom-start',
                       },
                     }}
                     slots={{
-                      // textField: (params) => (
-                      //   <Button
-                      //     {...params}
                       textField: () => (
                         <Button
                           onClick={() => setOpen('departure')}
@@ -308,13 +356,7 @@ export default function FlightSearch() {
                       },
                     }}
                     minDate={dates.departure || undefined}
-                    // renderInput={(params) => (
-                    //   <Button
-                    //     {...params.inputProps}
                     slots={{
-                      // textField: (params) => (
-                      //   <Button
-                      //     {...params}
                       textField: () => (
                         <Button
                           onClick={() => setOpen('return')}
@@ -339,7 +381,7 @@ export default function FlightSearch() {
                     }}
                   />
                 </Stack>
-              </Box>
+              </div>
             </LocalizationProvider>
           </Box>
         </Box>
@@ -348,6 +390,7 @@ export default function FlightSearch() {
         <Button
           variant='contained'
           fullWidth
+          onClick={handleSearch}
           sx={{
             bgcolor: '#8AB4F8',
             textTransform: 'none',
