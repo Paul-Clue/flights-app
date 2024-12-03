@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
-  // Box,
   Container,
   Typography,
   Select,
@@ -40,7 +39,8 @@ interface Flight {
   }>;
 }
 
-export default function ResultsPage() {
+// Create a separate component for the results content
+function ResultsContent() {
   const searchParams = useSearchParams();
   const [flights, setFlights] = useState<Flight[]>([]);
   const [loading, setLoading] = useState(true);
@@ -189,5 +189,30 @@ export default function ResultsPage() {
         </Typography>
       )}
     </Container>
+  );
+}
+
+// Main page component with Suspense
+export default function ResultsPage() {
+  return (
+    <Suspense
+      fallback={
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+          <Typography variant="h4" sx={{ mb: 4, color: 'white' }}>
+            Loading Results...
+          </Typography>
+          {[...Array(3)].map((_, i) => (
+            <Skeleton
+              key={i}
+              variant="rectangular"
+              height={200}
+              sx={{ mb: 2, bgcolor: 'rgba(255,255,255,0.1)' }}
+            />
+          ))}
+        </Container>
+      }
+    >
+      <ResultsContent />
+    </Suspense>
   );
 }

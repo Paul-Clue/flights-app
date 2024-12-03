@@ -145,19 +145,19 @@ export default function FlightSearch() {
       });
 
       const data = await response.json();
-      console.log('API Response:', JSON.stringify(data, null, 2));
+      console.log('Search Response:', JSON.stringify(data, null, 2));
 
       if (!response.ok) {
-        throw new Error(data.error || 'Search failed');
+        throw new Error(data.error || `API error: ${response.status}`);
       }
 
-      // Check for flights array directly
-      if (
-        !data.flights ||
-        !Array.isArray(data.flights) ||
-        data.flights.length === 0
-      ) {
-        throw new Error('No flights found for this route');
+      if (!data.flights || !Array.isArray(data.flights)) {
+        console.error('Invalid flight data structure:', data);
+        throw new Error(data.message || 'Invalid flight data received');
+      }
+
+      if (data.flights.length === 0) {
+        throw new Error('No flights found for this route. Please try different dates or airports.');
       }
 
       // Store the flight data in the API route cache

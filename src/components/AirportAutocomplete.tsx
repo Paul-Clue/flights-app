@@ -55,11 +55,11 @@ export default function AirportAutocomplete({ type, value, onChange }: Props) {
         );
 
         if (!response.ok) {
-          throw new Error('Failed to fetch airports');
+          throw new Error(`API error: ${response.status}`);
         }
 
         const data = await response.json();
-        console.log('API Response:', data);
+        console.log('Airport Search Response:', JSON.stringify(data, null, 2));
 
         if (active && data.data && Array.isArray(data.data)) {
           const airports: Airport[] = data.data.map((airport: ApiAirport) => ({
@@ -72,6 +72,7 @@ export default function AirportAutocomplete({ type, value, onChange }: Props) {
           console.log('Mapped Airports:', airports);
           setOptions(airports);
         } else {
+          console.log('No airports found in response:', data);
           setOptions([]);
         }
       } catch (error) {

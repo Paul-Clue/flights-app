@@ -6,7 +6,7 @@ interface LocationIds {
   entityId: string;
 }
 
-interface ApiFlightResponse {
+interface ApiItinerary {
   id: string;
   price: {
     raw: number;
@@ -35,10 +35,26 @@ interface ApiFlightResponse {
   }>;
 }
 
+interface ApiResponse {
+  data: {
+    itineraries: ApiItinerary[];
+    context: {
+      status: string;
+      totalResults: number;
+    };
+  };
+  status: boolean;
+  timestamp: number;
+}
+
+const formatDate = (date: Date) => {
+  return date.toISOString().split('T')[0];
+};
+
 export async function POST(request: Request) {
   try {
     const searchData: FlightSearchData = await request.json();
-    console.log('Search Data:', searchData);
+    console.log('Search Request Data:', JSON.stringify(searchData, null, 2));
 
     if (!searchData.locations.origin || !searchData.locations.destination || !searchData.dates.departure) {
       return NextResponse.json(
@@ -57,9 +73,9 @@ export async function POST(request: Request) {
     const url = 'https://sky-scrapper.p.rapidapi.com/api/v1/flights/searchFlights';
 
     const departureDate = searchData.dates.departure ? 
-      new Date(searchData.dates.departure).toISOString().split('T')[0] : '';
+      formatDate(new Date(searchData.dates.departure)) : '';
     const returnDate = searchData.dates.return ? 
-      new Date(searchData.dates.return).toISOString().split('T')[0] : '';
+      formatDate(new Date(searchData.dates.return)) : '';
 
     const cabinClassMap = {
       'Economy': 'economy',
@@ -70,6 +86,13 @@ export async function POST(request: Request) {
 
     const originIds: LocationIds = JSON.parse(searchData.locations.origin);
     const destinationIds: LocationIds = JSON.parse(searchData.locations.destination);
+
+    console.log('Parsed Location IDs:', {
+      origin: originIds,
+      destination: destinationIds,
+      departureDate,
+      returnDate
+    });
 
     const params = new URLSearchParams({
       originSkyId: originIds.skyId,
@@ -87,9 +110,14 @@ export async function POST(request: Request) {
       countryCode: 'US'
     });
 
-    console.log('Search Parameters:', Object.fromEntries(params.entries()));
+    const apiUrl = `${url}?${params}`;
+    console.log('Full API URL:', apiUrl);
+    console.log('API Headers:', {
+      'X-RapidAPI-Key': process.env.RAPIDAPI_KEY ? 'present' : 'missing',
+      'X-RapidAPI-Host': 'sky-scrapper.p.rapidapi.com'
+    });
 
-    const response = await fetch(`${url}?${params}`, {
+    const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'X-RapidAPI-Key': process.env.RAPIDAPI_KEY || '',
@@ -97,47 +125,80 @@ export async function POST(request: Request) {
       }
     });
 
-    const flightData = await response.json();
-    console.log('Flight API Response:', flightData);
+    console.log('API Response Status:', response.status);
+    const flightData: ApiResponse = await response.json();
+    console.log('Raw API Response:', JSON.stringify(flightData, null, 2));
 
-    if (!response.ok || !flightData.data?.itineraries) {
+    if (!response.ok) {
+      console.log('API request failed:', response.status, response.statusText);
       return NextResponse.json({
         searchId: Date.now().toString(),
         flights: [],
-        message: 'No flights found'
+        message: 'API request failed'
+      });
+    }
+
+    if (!flightData.data?.itineraries) {
+      console.log('No itineraries in response:', flightData);
+      return NextResponse.json({
+        searchId: Date.now().toString(),
+        flights: [],
+        message: 'No flight data received'
       });
     }
 
     const searchId = Date.now().toString();
-    const mappedFlights = flightData.data.itineraries.map((flight: ApiFlightResponse) => ({
-      id: flight.id,
-      price: {
-        amount: flight.price.raw,
-        currency: 'USD'
-      },
-      legs: flight.legs.map(leg => ({
-        departure: {
-          time: leg.departure,
-          airport: leg.segments[0].origin.displayCode
-        },
-        arrival: {
-          time: leg.arrival,
-          airport: leg.segments[0].destination.displayCode
-        },
-        duration: leg.duration,
-        carrier: {
-          name: leg.carriers.marketing[0].name,
-          code: leg.carriers.marketing[0].alternateId
-        },
-        flightNumber: leg.segments[0].flightNumber
-      }))
-    }));
+    const itineraries = flightData.data.itineraries;
 
-    return NextResponse.json({
-      searchId,
-      flights: mappedFlights,
-      message: 'Search completed successfully'
-    });
+    try {
+      const mappedFlights = itineraries.map((flight: ApiItinerary) => ({
+        id: flight.id,
+        price: {
+          amount: parseFloat(String(flight.price.raw)) || 0,
+          currency: 'USD'
+        },
+        legs: flight.legs.map(leg => ({
+          departure: {
+            time: leg.departure,
+            airport: leg.segments[0]?.origin?.displayCode || ''
+          },
+          arrival: {
+            time: leg.arrival,
+            airport: leg.segments[0]?.destination?.displayCode || ''
+          },
+          duration: leg.duration,
+          carrier: {
+            name: leg.carriers.marketing[0]?.name || 'Unknown Airline',
+            code: leg.carriers.marketing[0]?.alternateId || ''
+          },
+          flightNumber: leg.segments[0]?.flightNumber || ''
+        }))
+      }));
+
+      console.log('Mapped Flights:', JSON.stringify(mappedFlights, null, 2));
+
+      if (mappedFlights.length === 0) {
+        return NextResponse.json({
+          searchId,
+          flights: [],
+          message: 'No flights available for this route'
+        });
+      }
+
+      return NextResponse.json({
+        searchId,
+        flights: mappedFlights,
+        message: 'Search completed successfully'
+      });
+
+    } catch (error) {
+      console.error('Error mapping flights:', error);
+      return NextResponse.json({
+        searchId,
+        flights: [],
+        message: 'Error processing flight data'
+      });
+    }
 
   } catch (error) {
     console.error('Error processing flight search:', error);
